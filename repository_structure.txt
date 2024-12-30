@@ -1,0 +1,25 @@
+ChromeFlow/
+│
+├── assets/
+│   ├── icons/
+│   │   ├── chrome-icon.png
+│   │   └── silhouette.png
+│   └── styles/
+│       └── main.css
+│
+├── src/
+│   ├── index.html
+│   └── js/
+│       ├── tabs.js
+│       ├── navigation.js
+│       └── settings.js
+│
+├── docs/
+│   ├── README.html
+│   └── README.txt
+│
+├── .gitignore
+├── LICENSE
+├── README.md
+├── requirements.py
+└── repository_structure.txt
