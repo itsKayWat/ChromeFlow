@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Browser</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        .browser {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .url-bar {
+            display: flex;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            justify-content: space-between;
+        }
+        .url-bar .left-buttons {
+            display: flex;
+        }
+        .url-bar .right-input {
+            display: flex;
+            flex: 1;
+            align-items: center;
+        }
+        .url-bar input {
+            flex: 1;
+            padding: 5px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .url-bar button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .url-bar button:hover {
+            background-color: #666;
+        }
+        .bookmarks {
+            display: flex;
+            background-color: #444;
+            padding: 5px;
+        }
+        .bookmarks a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+        }
+        .bookmarks a:hover {
+            text-decoration: underline;
+        }
+        .iframe-container {
+            flex: 1;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .profile img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        .settings-menu {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            width: 300px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .settings-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .settings-menu li {
+            margin-bottom: 10px;
+        }
+        .settings-menu a {
+            color: white;
+            text-decoration: none;
+        }
+        .settings-menu a:hover {
+            text-decoration: underline;
+        }
+        .tabs {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            background-color: #202124;
+            padding: 0 4px;
+            height: 40px;
+            border-bottom: 1px solid #3c4043;
+        }
+        #tabContainer {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+            margin-right: 0;
+        }
+        #tabContainer::-webkit-scrollbar {
+            display: none;
+        }
+        .tab {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #292a2d;
+            color: #9ca1a7;
+            padding: 0 10px;
+            margin-right: 1px;
+            border-radius: 8px 8px 0 0;
+            max-width: 240px;
+            min-width: 88px;
+            height: 32px;
+            font-size: 12px;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        .tab:hover {
+            background-color: #353535;
+        }
+        .tab.active {
+            background-color: #323639;
+            color: #e8eaed;
+        }
+        .tab-title {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 8px;
+        }
+        .tab .close-btn {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+        .tab:hover .close-btn {
+            opacity: 1;
+        }
+        .tab .close-btn:hover {
+            background-color: #4f5356;
+        }
+        .new-tab-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: #9ca1a7;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 1px;
+            flex-shrink: 0;
+            align-self: center;
+        }
+        .new-tab-btn:hover {
+            background-color: #3c4043;
+            color: #e8eaed;
+        }
+        .right-input {
+            display: flex;
+            flex: 1;
+            align-items: center;
+        }
+        .right-input input {
+            flex: 1;
+            padding: 5px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #202124;
+            z-index: 1000;
+        }
+        .settings-wrapper {
+            display: flex;
+            height: 100%;
+        }
+        .settings-sidebar {
+            width: 256px;
+            background-color: #292a2d;
+            height: 100%;
+            overflow-y: auto;
+            border-right: 1px solid #3c4043;
+        }
+        .settings-header {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            gap: 12px;
+        }
+        .settings-icon {
+            width: 24px;
+            height: 24px;
+        }
+        .settings-search-container {
+            padding: 0 20px 20px;
+        }
+        .settings-search {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 18px;
+            border: none;
+            background-color: #3c4043;
+            color: white;
+        }
+        .settings-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .settings-nav a {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: #e8eaed;
+            text-decoration: none;
+            gap: 12px;
+        }
+        .settings-nav a:hover {
+            background-color: #3c4043;
+        }
+        .settings-nav a.active {
+            background-color: #3c4043;
+            color: #8ab4f8;
+        }
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .settings-section {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+        .settings-card {
+            background-color: #292a2d;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .profile-section, .settings-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #3c4043;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 16px;
+        }
+        .profile-info {
+            flex: 1;
+        }
+        .arrow {
+            color: #9aa0a6;
+            font-size: 20px;
+        }
+        h2, h3, h4 {
+            color: #e8eaed;
+            margin: 0;
+        }
+        p {
+            color: #9aa0a6;
+            margin: 4px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser">
+        <div class="tabs">
+            <div id="tabContainer">
+                <!-- Tabs will be added here -->
+            </div>
+            <button class="new-tab-btn" onclick="addTab()">+</button>
+        </div>
+        <div class="url-bar">
+            <div class="left-buttons">
+                <button onclick="goBack()">←</button>
+                <button onclick="goForward()">→</button>
+                <button onclick="refreshPage()">⟳</button>
+                <button onclick="goHome()">🏠</button>
+            </div>
+            <div class="right-input">
+                <input type="text" id="urlInput" placeholder="Enter URL here..." style="flex: 1;">
+                <button onclick="loadPage()">Go</button>
+                <button onclick="toggleFullScreen()">⛶</button>
+                <div class="profile">
+                    <img src="silhouette.png" alt="Profile" id="profileIcon">
+                </div>
+                <button onclick="toggleSettings()">⋮</button>
+            </div>
+        </div>
+        <div id="settingsModal" class="settings-modal" style="display: none;">
+            <div class="settings-wrapper">
+                <div class="settings-sidebar">
+                    <div class="settings-header">
+                        <img src="chrome-icon.png" alt="Browser Icon" class="settings-icon">
+                        <h2>Settings</h2>
+                    </div>
+                    <div class="settings-search-container">
+                        <input type="text" placeholder="Search settings" class="settings-search">
+                    </div>
+                    <nav class="settings-nav">
+                        <ul>
+                            <li><a href="#" class="active"><i class="icon">G</i>You and Google</a></li>
+                            <li><a href="#"><i class="icon">🔑</i>Autofill and passwords</a></li>
+                            <li><a href="#"><i class="icon">🛡️</i>Privacy and security</a></li>
+                            <li><a href="#"><i class="icon">⚡</i>Performance</a></li>
+                            <li><a href="#"><i class="icon">🤖</i>Experimental AI</a></li>
+                            <li><a href="#"><i class="icon">🎨</i>Appearance</a></li>
+                            <li><a href="#"><i class="icon">🔍</i>Search engine</a></li>
+                            <li><a href="#"><i class="icon">💻</i>Default browser</a></li>
+                            <li><a href="#"><i class="icon">🚀</i>On startup</a></li>
+                            <li><a href="#"><i class="icon">🌐</i>Languages</a></li>
+                            <li><a href="#"><i class="icon">⬇️</i>Downloads</a></li>
+                            <li><a href="#"><i class="icon">👥</i>Accessibility</a></li>
+                            <li><a href="#"><i class="icon">⚙️</i>System</a></li>
+                            <li><a href="#"><i class="icon">↺</i>Reset settings</a></li>
+                            <li><a href="#"><i class="icon">🧩</i>Extensions</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h3>You and Google</h3>
+                        <div class="settings-card">
+                            <div class="profile-section">
+                                <img src="silhouette.png" alt="Profile" class="profile-pic">
+                                <div class="profile-info">
+                                    <h4>Person 1</h4>
+                                    <p>Manage your Google Account</p>
+                                </div>
+                                <span class="arrow">›</span>
+                            </div>
+                            <div class="settings-item">
+                                <div class="item-text">
+                                    <h4>Sync and Google services</h4>
+                                    <p>Control how your browsing data is synced</p>
+                                </div>
+                                <span class="arrow">›</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bookmarks">
+            <a href="#" onclick="loadBookmark('https://www.google.com')">Google</a>
+            <a href="#" onclick="loadBookmark('https://www.github.com')">GitHub</a>
+            <a href="#" onclick="loadBookmark('https://www.facebook.com')">Facebook</a>
+            <a href="#" onclick="loadBookmark('https://www.twitter.com')">Twitter</a>
+            <!-- Add more bookmarks as needed -->
+        </div>
+        <div class="iframe-container">
+            <iframe id="browserFrame" src="https://www.example.com"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 0;
+        const tabs = [];
+
+        function loadPage() {
+            let url = document.getElementById('urlInput').value;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            document.getElementById('browserFrame').src = url;
+        }
+
+        function createTab(title = 'New Tab', isActive = true) {
+            const tab = document.createElement('div');
+            tab.className = `tab ${isActive ? 'active' : ''}`;
+            
+            const tabTitle = document.createElement('span');
+            tabTitle.className = 'tab-title';
+            tabTitle.textContent = title;
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close-btn';
+            closeBtn.innerHTML = '×';
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeTab(tab);
+            };
+            
+            tab.appendChild(tabTitle);
+            tab.appendChild(closeBtn);
+            
+            tab.onclick = () => switchTab(tab);
+            
+            return tab;
+        }
+
+        function addTab() {
+            const tabContainer = document.getElementById('tabContainer');
+            const newTab = createTab('New Tab', true);
+            tabContainer.appendChild(newTab);
+            
+            // Scroll to the new tab
+            newTab.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function removeTab(tab) {
+            const tabContainer = document.getElementById('tabContainer');
+            tab.remove();
+            
+            // If no tabs left, add one
+            if (tabContainer.children.length === 0) {
+                addTab();
+            }
+            
+            // Select the last tab if the removed tab was active
+            if (tab.classList.contains('active')) {
+                const lastTab = tabContainer.lastElementChild;
+                if (lastTab) {
+                    lastTab.classList.add('active');
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            tab.classList.add('active');
+            
+            // Update browser frame content based on tab
+            // Add your logic here
+        }
+
+        function toggleSettings() {
+            const browserFrame = document.getElementById('browserFrame');
+            const urlInput = document.getElementById('urlInput');
+            
+            // Create new tab for settings
+            const tabContainer = document.getElementById('tabContainer');
+            const settingsTab = document.createElement('span');
+            settingsTab.className = 'tab active';
+            settingsTab.textContent = 'Settings';
+            
+            // Remove active class from other tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            tabContainer.appendChild(settingsTab);
+            
+            // Update URL bar
+            urlInput.value = 'chrome://settings';
+            
+            // Create settings content
+            const settingsContent = `
+                <html>
+                <head>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background-color: #202124;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        }
+                        .settings-wrapper {
+                            display: flex;
+                            height: 100vh;
+                        }
+                        .settings-sidebar {
+                            width: 256px;
+                            background-color: #292a2d;
+                            height: 100%;
+                            overflow-y: auto;
+                            border-right: 1px solid #3c4043;
+                        }
+                        .settings-header {
+                            display: flex;
+                            align-items: center;
+                            padding: 20px;
+                            gap: 12px;
+                        }
+                        .settings-icon {
+                            width: 24px;
+                            height: 24px;
+                        }
+                        .settings-search-container {
+                            padding: 0 20px 20px;
+                        }
+                        .settings-search {
+                            width: 100%;
+                            padding: 8px 12px;
+                            border-radius: 18px;
+                            border: none;
+                            background-color: #3c4043;
+                            color: white;
+                        }
+                        .settings-nav ul {
+                            list-style: none;
+                            padding: 0;
+                            margin: 0;
+                        }
+                        .settings-nav a {
+                            display: flex;
+                            align-items: center;
+                            padding: 10px 20px;
+                            color: #e8eaed;
+                            text-decoration: none;
+                            gap: 12px;
+                        }
+                        .settings-nav a:hover {
+                            background-color: #3c4043;
+                        }
+                        .settings-nav a.active {
+                            background-color: #3c4043;
+                            color: #8ab4f8;
+                        }
+                        .settings-content {
+                            flex: 1;
+                            padding: 20px;
+                            overflow-y: auto;
+                        }
+                        .settings-section {
+                            max-width: 680px;
+                            margin: 0 auto;
+                        }
+                        .settings-card {
+                            background-color: #292a2d;
+                            border-radius: 8px;
+                            margin-top: 20px;
+                        }
+                        .profile-section, .settings-item {
+                            display: flex;
+                            align-items: center;
+                            padding: 16px;
+                            border-bottom: 1px solid #3c4043;
+                        }
+                        .profile-pic {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            margin-right: 16px;
+                        }
+                        .profile-info {
+                            flex: 1;
+                        }
+                        .arrow {
+                            color: #9aa0a6;
+                            font-size: 20px;
+                        }
+                        h2, h3, h4 {
+                            color: #e8eaed;
+                            margin: 0;
+                        }
+                        p {
+                            color: #9aa0a6;
+                            margin: 4px 0 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="settings-wrapper">
+                        <div class="settings-sidebar">
+                            <div class="settings-header">
+                                <img src="chrome-icon.png" alt="Browser Icon" class="settings-icon">
+                                <h2>Settings</h2>
+                            </div>
+                            <div class="settings-search-container">
+                                <input type="text" placeholder="Search settings" class="settings-search">
+                            </div>
+                            <nav class="settings-nav">
+                                <ul>
+                                    <li><a href="#" class="active"><i class="icon">G</i>You and Google</a></li>
+                                    <li><a href="#"><i class="icon">🔑</i>Autofill and passwords</a></li>
+                                    <li><a href="#"><i class="icon">🛡️</i>Privacy and security</a></li>
+                                    <li><a href="#"><i class="icon">⚡</i>Performance</a></li>
+                                    <li><a href="#"><i class="icon">🤖</i>Experimental AI</a></li>
+                                    <li><a href="#"><i class="icon">🎨</i>Appearance</a></li>
+                                    <li><a href="#"><i class="icon">🔍</i>Search engine</a></li>
+                                    <li><a href="#"><i class="icon">💻</i>Default browser</a></li>
+                                    <li><a href="#"><i class="icon">🚀</i>On startup</a></li>
+                                    <li><a href="#"><i class="icon">🌐</i>Languages</a></li>
+                                    <li><a href="#"><i class="icon">⬇️</i>Downloads</a></li>
+                                    <li><a href="#"><i class="icon">👥</i>Accessibility</a></li>
+                                    <li><a href="#"><i class="icon">⚙️</i>System</a></li>
+                                    <li><a href="#"><i class="icon">↺</i>Reset settings</a></li>
+                                    <li><a href="#"><i class="icon">🧩</i>Extensions</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div class="settings-content">
+                            <div class="settings-section">
+                                <h3>You and Google</h3>
+                                <div class="settings-card">
+                                    <div class="profile-section">
+                                        <img src="silhouette.png" alt="Profile" class="profile-pic">
+                                        <div class="profile-info">
+                                            <h4>Person 1</h4>
+                                            <p>Manage your Google Account</p>
+                                        </div>
+                                        <span class="arrow">›</span>
+                                    </div>
+                                    <div class="settings-item">
+                                        <div class="item-text">
+                                            <h4>Sync and Google services</h4>
+                                            <p>Control how your browsing data is synced</p>
+                                        </div>
+                                        <span class="arrow">›</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // Inject the content into the iframe
+            browserFrame.srcdoc = settingsContent;
+        }
+
+        document.getElementById('urlInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loadPage();
+            }
+        });
+
+        function goBack() {
+            document.getElementById('browserFrame').contentWindow.history.back();
+        }
+
+        function goForward() {
+            document.getElementById('browserFrame').contentWindow.history.forward();
+        }
+
+        function refreshPage() {
+            document.getElementById('browserFrame').contentWindow.location.reload();
+        }
+
+        function goHome() {
+            document.getElementById('browserFrame').src = 'https://www.example.com';
+        }
+
+        function toggleFullScreen() {
+            const iframe = document.getElementById('browserFrame');
+            if (!document.fullscreenElement) {
+                iframe.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Add click handlers for settings navigation
+        document.querySelectorAll('.settings-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
+                link.classList.add('active');
+                // Here you would typically update the content section
+            });
+        });
+    </script>
+</body>
+</html>
